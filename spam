@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Shitty PAckage Manager
+
+# First-time setup things
+if test ! -f "/usr/bin/spam"; then
+    ln -sr ./spam /usr/bin/spam
+fi
+
+# Go to /usr/local/src
+INSTALL_PATH=/usr/local/src
+INSTALL_PATH=/tmp
+cd $INSTALL_PATH
+
+# Give package name
+read -p "Enter package name: " package_name
+
+# Type URL of package
+if [ $1 == "install" ] & [ -n "$2" ]
+then
+    package_url=$2
+else
+    read -p "Type URL of package (source code / .deb / .rpm): " package_url
+fi
+
+# Parse type of package
+if [[ "$package_url" == *.git ]]
+then
+    # Clone git
+    #package_name=$(basename $package_url .git)
+    echo "Installing $package_name from source code..."
+
+    git clone $package_url $INSTALL_PATH/$package_name
+
+
+elif [[ "$package_url" == *.deb ]]
+then
+    # Download and install .deb file
+    #package_name=$(basename $package_url .deb)
+    echo "Installing $package_name from .deb file"
+
+    mkdir $package_name
+    cd $package_name
+    package_file=$(basename $package_url)
+    curl $package_url --output $package_file
+elif [[ "$package_url" == *.rpm ]]
+then
+    # Download and install .rpm file
+    #IFS=. read -r package_name <<< $(basename $package_url .rpm)
+    #package_name=$(basename $package_url .rpm)
+    echo "Installing $package_name from .rpm file"
+else
+    echo "Package URL did not match a .git repo, .deb, .rpm"
+fi
