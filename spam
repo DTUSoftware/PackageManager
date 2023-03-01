@@ -2,10 +2,35 @@
 
 # Shitty PAckage Manager
 
-# First-time setup things
-if test ! -f "/usr/bin/spam"; then
-    ln -sr ./spam /usr/bin/spam
+# First-time setup things, for sudo users
+if [ "$EUID" -eq 0 ]
+then
+    # Link spam to bin
+    if test ! -f "/usr/bin/spam"; then
+        ln -sr ./spam /usr/bin/spam
+    fi
+    # Mod perm for user local
+    if [ "$(stat -c '%a' /usr/local/src)" != "1777" ]
+    then
+        chmod -R 1777 /usr/local/src
+    fi
+    # Edit sudoers file
+    if ! grep -q "spam" /etc/sudoers
+    then
+        # We copy the sudoers file and change it, to not fuck it up
+        cp /etc/sudoers /tmp/sudoers_spam
+        echo "ALL ALL=NOPASSWD: /usr/bin/spam" >> /tmp/sudoers_spam
+        # We check, using visudo, if the tmp sudoers file is valid
+        if visudo -qcf /tmp/sudoers_spam
+        then
+            echo "File OK, changing sudoers file!"
+            mv -f /tmp/sudoers_spam /etc/sudoers
+        else
+            echo "Failed to change sudoers file! File not valid, aborting!"
+        fi
+    fi
 fi
+
 
 # Go to /usr/local/src
 INSTALL_PATH=/usr/local/src
@@ -16,15 +41,38 @@ cd $INSTALL_PATH
 read -p "Enter package name: " package_name
 
 # Type URL of package
-if [ $1 == "install" ] & [ -n "$2" ]
+if [[ $1 == "install" ]] & [[ -n "$2" ]]
 then
     package_url=$2
 else
-    read -p "Type URL of package (source code / .deb / .rpm): " package_url
+    read -p "Type URL of package (source code / .deb / .rpm / .tar): " package_url
 fi
 
+# Check for package on APT cache, and prompt to install if found, otherwise don't
+# <implement me>
+
 # Parse type of package
-if [[ "$package_url" == *.git ]]
+if [[ "$package_url" == *.tar.* ]]
+then
+    # Download tarball
+    echo "Installing $package_name from tarball..."
+
+    mkdir $package_name
+    cd $package_name
+    package_file=$(basename $package_url)
+    curl $package_url --output $package_file
+
+    # Unpack tarball
+    tar -xf $package_file
+
+    # We assume it's a C-compiled program
+
+    # Configure
+    ./configure
+    # Install
+    make
+    make install
+elif [[ "$package_url" == *.git ]]
 then
     # Clone git
     #package_name=$(basename $package_url .git)
@@ -32,7 +80,13 @@ then
 
     git clone $package_url $INSTALL_PATH/$package_name
 
-
+    # We assume it's a C-compiled program
+    
+    # Configure
+    ./configure
+    # Install
+    make
+    make install
 elif [[ "$package_url" == *.deb ]]
 then
     # Download and install .deb file
@@ -43,6 +97,13 @@ then
     cd $package_name
     package_file=$(basename $package_url)
     curl $package_url --output $package_file
+
+    # Check package dependencies
+    dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
+
+    # Install the package
+    dpkg -i $package_file
+
 elif [[ "$package_url" == *.rpm ]]
 then
     # Download and install .rpm file
