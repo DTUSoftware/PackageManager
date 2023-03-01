@@ -2,12 +2,16 @@
 
 # Shitty PAckage Manager
 
-# First-time setup things, for sudo users
+# Check for sudo
 if [ "$EUID" -eq 0 ]
 then
+    # First-time setup things, for sudo users
     # Link spam to bin
     if test ! -f "/usr/bin/spam"; then
         ln -sr ./spam /usr/bin/spam
+        chmod +x /usr/bin/spam
+        # Add alias to run as sudo
+        alias spam="sudo /usr/bin/spam"
     fi
     # Mod perm for user local
     if [ "$(stat -c '%a' /usr/local/src)" != "1777" ]
@@ -29,87 +33,98 @@ then
             echo "Failed to change sudoers file! File not valid, aborting!"
         fi
     fi
-fi
 
+    # Go to /usr/local/src
+    INSTALL_PATH=/usr/local/src
+    INSTALL_PATH=/tmp
+    cd $INSTALL_PATH
 
-# Go to /usr/local/src
-INSTALL_PATH=/usr/local/src
-INSTALL_PATH=/tmp
-cd $INSTALL_PATH
+    # Give package name
+    read -p "Enter package name: " package_name
 
-# Give package name
-read -p "Enter package name: " package_name
+    # Type URL of package
+    if [[ $1 == "install" ]] & [[ -n "$2" ]]
+    then
+        package_url=$2
+    else
+        read -p "Type URL of package (source code / .deb / .rpm / .tar): " package_url
+    fi
 
-# Type URL of package
-if [[ $1 == "install" ]] & [[ -n "$2" ]]
-then
-    package_url=$2
+    # Check for package on APT cache, and prompt to install if found, otherwise don't
+    # <implement me>
+
+    # Parse type of package
+    if [[ "$package_url" == *.tar.* ]]
+    then
+        # Download tarball
+        echo "Installing $package_name from tarball..."
+
+        mkdir $package_name
+        cd $package_name
+        package_file=$(basename $package_url)
+        curl $package_url --output $package_file
+
+        # Unpack tarball
+        tar -xf $package_file
+
+        # We assume it's a C-compiled program
+
+        # Configure
+        ./configure
+        # Install
+        make
+        make install
+    elif [[ "$package_url" == *.git ]]
+    then
+        # Clone git
+        #package_name=$(basename $package_url .git)
+        echo "Installing $package_name from source code..."
+
+        git clone $package_url $INSTALL_PATH/$package_name
+
+        # We assume it's a C-compiled program
+        
+        # Configure
+        ./configure
+        # Install
+        make
+        make install
+    elif [[ "$package_url" == *.deb ]]
+    then
+        # Download and install .deb file
+        #package_name=$(basename $package_url .deb)
+        echo "Installing $package_name from .deb file"
+
+        mkdir $package_name
+        cd $package_name
+        package_file=$(basename $package_url)
+        curl $package_url --output $package_file
+
+    # dpkg --dry-run -i package.deb
+    # dpkg -I package
+    # apt-cache rdepends package.deb
+    # apt-cache showpkg package-name
+    # apt-cache depends package-name
+
+        # Check package dependencies
+        #dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
+
+        # Install the package
+        dpkg -i $package_file
+
+        apt -f install
+
+    elif [[ "$package_url" == *.rpm ]]
+    then
+        # Download and install .rpm file
+        #IFS=. read -r package_name <<< $(basename $package_url .rpm)
+        #package_name=$(basename $package_url .rpm)
+        echo "Installing $package_name from .rpm file"
+    else
+        echo "Package URL did not match a .git repo, .deb, .rpm"
+    fi
 else
-    read -p "Type URL of package (source code / .deb / .rpm / .tar): " package_url
+    echo -e "Run the script as sudo the first time.\nIf you aren't a superuser, ask your superuser to run it once!"
 fi
 
-# Check for package on APT cache, and prompt to install if found, otherwise don't
-# <implement me>
 
-# Parse type of package
-if [[ "$package_url" == *.tar.* ]]
-then
-    # Download tarball
-    echo "Installing $package_name from tarball..."
-
-    mkdir $package_name
-    cd $package_name
-    package_file=$(basename $package_url)
-    curl $package_url --output $package_file
-
-    # Unpack tarball
-    tar -xf $package_file
-
-    # We assume it's a C-compiled program
-
-    # Configure
-    ./configure
-    # Install
-    make
-    make install
-elif [[ "$package_url" == *.git ]]
-then
-    # Clone git
-    #package_name=$(basename $package_url .git)
-    echo "Installing $package_name from source code..."
-
-    git clone $package_url $INSTALL_PATH/$package_name
-
-    # We assume it's a C-compiled program
-    
-    # Configure
-    ./configure
-    # Install
-    make
-    make install
-elif [[ "$package_url" == *.deb ]]
-then
-    # Download and install .deb file
-    #package_name=$(basename $package_url .deb)
-    echo "Installing $package_name from .deb file"
-
-    mkdir $package_name
-    cd $package_name
-    package_file=$(basename $package_url)
-    curl $package_url --output $package_file
-
-    # Check package dependencies
-    dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
-
-    # Install the package
-    dpkg -i $package_file
-
-elif [[ "$package_url" == *.rpm ]]
-then
-    # Download and install .rpm file
-    #IFS=. read -r package_name <<< $(basename $package_url .rpm)
-    #package_name=$(basename $package_url .rpm)
-    echo "Installing $package_name from .rpm file"
-else
-    echo "Package URL did not match a .git repo, .deb, .rpm"
-fi
