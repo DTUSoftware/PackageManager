@@ -112,7 +112,7 @@ then
         # Install the package
         if ! dpkg -i $package_file
         then
-            # Install dependencies
+            # Install dependencies and package from apt-cache
             apt -f install
         fi
     elif [[ "$package_url" == *.rpm ]]
@@ -121,6 +121,36 @@ then
         #IFS=. read -r package_name <<< $(basename $package_url .rpm)
         #package_name=$(basename $package_url .rpm)
         echo "Installing $package_name from .rpm file"
+
+        mkdir $package_name
+        cd $package_name
+        package_file=$(basename $package_url)
+        curl $package_url --output $package_file
+
+        # If installing rpm file directly
+        echo "Do you want to install the .rpm-file with dpkg? (alternative is rpm)"
+        select yn in "Yes" "No"; do
+            case $yn in
+                Yes )
+                    # convert the rpm-file to a deb-file
+                    deb_package_file=$(alien --to-deb $package_file | cut -d " " -f 1)
+                    # install the deb-file
+                    if ! dpkg -i $deb_package_file
+                    then
+                        # Install dependencies and package from apt-cache
+                        apt -f install
+                    fi
+                    break;;
+                No ) 
+                    if ! rpm -i $package_file
+                    then
+                        # Install package with yum
+                        yum --nogpgcheck localinstall $package_file
+                    fi
+                    exit;;
+            esac
+        done
+        
     else
         echo "Package URL did not match a .git repo, .deb, .rpm"
     fi
