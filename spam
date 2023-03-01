@@ -100,20 +100,21 @@ then
         package_file=$(basename $package_url)
         curl $package_url --output $package_file
 
-    # dpkg --dry-run -i package.deb
-    # dpkg -I package
-    # apt-cache rdepends package.deb
-    # apt-cache showpkg package-name
-    # apt-cache depends package-name
+        # dpkg --dry-run -i package.deb
+        # dpkg -I package
+        # apt-cache rdepends package.deb
+        # apt-cache showpkg package-name
+        # apt-cache depends package-name
 
         # Check package dependencies
         #dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
 
         # Install the package
-        dpkg -i $package_file
-
-        apt -f install
-
+        if ! dpkg -i $package_file
+        then
+            # Install dependencies
+            apt -f install
+        fi
     elif [[ "$package_url" == *.rpm ]]
     then
         # Download and install .rpm file
