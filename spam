@@ -39,17 +39,17 @@ then
     # Go to /usr/local/src
     INSTALL_PATH=/usr/local/src
     INSTALL_PATH=/tmp
-    cd $INSTALL_PATH
+    cd $INSTALL_PATH || exit
 
     # Give package name
-    read -p "Enter package name: " package_name
+    read -r -p "Enter package name: " package_name
 
     # Type URL of package
-    if [[ $1 == "install" ]] & [[ -n "$2" ]]
+    if [[ $1 == "install" ]] && [[ -n "$2" ]]
     then
         package_url=$2
     else
-        read -p "Type URL of package (source code / .deb / .rpm / .tar): " package_url
+        read -r -p "Type URL of package (source code / .deb / .rpm / .tar): " package_url
     fi
 
     # Parse type of package
@@ -58,13 +58,13 @@ then
         # Download tarball
         echo "Installing $package_name from tarball..."
 
-        mkdir $package_name
-        cd $package_name
-        package_file=$(basename $package_url)
-        curl $package_url --output $package_file
+        mkdir "$package_name"
+        cd "$package_name" || exit
+        package_file=$(basename "$package_url")
+        curl "$package_url" --output "$package_file"
 
         # Unpack tarball
-        tar -xf $package_file
+        tar -xf "$package_file"
 
         # We assume it's a C-compiled program
 
@@ -79,7 +79,7 @@ then
         #package_name=$(basename $package_url .git)
         echo "Installing $package_name from source code..."
 
-        git clone $package_url $INSTALL_PATH/$package_name
+        git clone "$package_url" $INSTALL_PATH/"$package_name"
 
         # We assume it's a C-compiled program
         
@@ -94,10 +94,10 @@ then
         #package_name=$(basename $package_url .deb)
         echo "Installing $package_name from .deb file"
 
-        mkdir $package_name
-        cd $package_name
-        package_file=$(basename $package_url)
-        curl $package_url --output $package_file
+        mkdir "$package_name"
+        cd "$package_name" || exit
+        package_file=$(basename "$package_url")
+        curl "$package_url" --output "$package_file"
 
         # dpkg --dry-run -i package.deb
         # dpkg -I package
@@ -108,12 +108,12 @@ then
 
         # Check package dependencies
         echo "Do you want to install $package_name with the following dependencies?"
-        apt-cache depends $package_file
+        apt-cache depends "$package_file"
         select yn in "Yes" "No"; do
             case $yn in
                 Yes )
                     # Install the package
-                    if ! dpkg -i $package_file
+                    if ! dpkg -i "$package_file"
                     then
                         # Install dependencies and package from apt-cache
                         apt -f install
@@ -131,10 +131,10 @@ then
         #package_name=$(basename $package_url .rpm)
         echo "Installing $package_name from .rpm file"
 
-        mkdir $package_name
-        cd $package_name
-        package_file=$(basename $package_url)
-        curl $package_url --output $package_file
+        mkdir "$package_name"
+        cd "$package_name" || exit
+        package_file=$(basename "$package_url")
+        curl "$package_url" --output "$package_file"
 
         # If installing rpm file directly
         echo "Do you want to install the .rpm-file with dpkg? (alternative is rpm)"
@@ -142,16 +142,16 @@ then
             case $yn in
                 Yes )
                     # convert the rpm-file to a deb-file
-                    deb_package_file=$(alien --to-deb $package_file | cut -d " " -f 1)
+                    deb_package_file=$(alien --to-deb "$package_file" | cut -d " " -f 1)
 
                     # Check package dependencies
                     echo "Do you want to install $package_name with the following dependencies?"
-                    apt-cache depends $package_file
+                    apt-cache depends "$package_file"
                     select yn2 in "Yes" "No"; do
                         case $yn2 in
                             Yes )
                                 # Install the package
-                                if ! dpkg -i $deb_package_file
+                                if ! dpkg -i "$deb_package_file"
                                 then
                                     # Install dependencies and package from apt-cache
                                     apt -f install
@@ -166,15 +166,15 @@ then
                 No ) 
                     # Check package dependencies
                     echo "Do you want to install $package_name with the following dependencies?"
-                    rpm -qpR $package_file
+                    rpm -qpR "$package_file"
                     select yn2 in "Yes" "No"; do
                         case $yn2 in
                             Yes )
                                 # Install the package
-                                if ! rpm -i $package_file
+                                if ! rpm -i "$package_file"
                                 then
                                     # Install package with yum
-                                    yum --nogpgcheck localinstall $package_file
+                                    yum --nogpgcheck localinstall "$package_file"
                                 fi
                                 break;;
                             No ) 
@@ -196,5 +196,3 @@ else
     fi
     sudo sh ./spam
 fi
-
-
