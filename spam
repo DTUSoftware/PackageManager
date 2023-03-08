@@ -121,7 +121,7 @@ then
                             echo "$dependencies"
                             break;;
                         No ) 
-                            exit;;
+                            break;;
                     esac
                 done
             else
@@ -183,7 +183,7 @@ then
                                         echo "$dependencies"
                                         break;;
                                     No ) 
-                                        exit;;
+                                        break;;
                                 esac
                             done
                         else
