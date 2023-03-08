@@ -130,20 +130,20 @@ then
 
             echo "Do you want to install $package_name with the listed dependencies?"
             select yn in "Yes" "No"; do
-            case $yn in
-                Yes )
-                    # Install the package
-                    if ! dpkg -i "./$package_file"
-                    then
-                        # Install dependencies and package from apt-cache
-                        apt -f install
-                    fi
-                    break;;
-                No ) 
-                    echo "Installation cancelled."
-                    exit;;
-            esac
-        done
+                case $yn in
+                    Yes )
+                        # Install the package
+                        if ! dpkg -i "./$package_file"
+                        then
+                            # Install dependencies and package from apt-cache
+                            apt -f install
+                        fi
+                        break;;
+                    No ) 
+                        echo "Installation cancelled."
+                        exit;;
+                esac
+            done
         else
             echo "$dependencies"
         fi
@@ -192,20 +192,20 @@ then
 
                         echo "Do you want to install $package_name with the listed dependencies?"
                         select yn in "Yes" "No"; do
-                        case $yn in
-                            Yes )
-                                # Install the package
-                                if ! dpkg -i "./$deb_package_file"
-                                then
-                                    # Install dependencies and package from apt-cache
-                                    apt -f install
-                                fi
-                                break;;
-                            No ) 
-                                echo "Installation cancelled."
-                                exit;;
-                        esac
-                    done
+                            case $yn in
+                                Yes )
+                                    # Install the package
+                                    if ! dpkg -i "./$deb_package_file"
+                                    then
+                                        # Install dependencies and package from apt-cache
+                                        apt -f install
+                                    fi
+                                    break;;
+                                No ) 
+                                    echo "Installation cancelled."
+                                    exit;;
+                            esac
+                        done
                     else
                         echo "$dependencies"
                     fi
