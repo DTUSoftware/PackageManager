@@ -52,9 +52,6 @@ then
         read -p "Type URL of package (source code / .deb / .rpm / .tar): " package_url
     fi
 
-    # Check for package on APT cache, and prompt to install if found, otherwise don't
-    # <implement me>
-
     # Parse type of package
     if [[ "$package_url" == *.tar.* ]]
     then
@@ -193,7 +190,11 @@ then
         echo "Package URL did not match a .git repo, .deb, .rpm"
     fi
 else
-    echo -e "Run the script as sudo the first time.\nIf you aren't a superuser, ask your superuser to run it once!"
+    # Only works for adding user aliases
+    if ! grep -q "/usr/bin/spam" ~/.bashrc; then
+        echo 'alias spam="sudo /usr/bin/spam"' >> ~/.bashrc
+    fi
+    sudo sh ./spam
 fi
 
 
