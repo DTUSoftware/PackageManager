@@ -107,9 +107,30 @@ then
         # dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
 
         # Check package dependencies
-        echo "Do you want to install $package_name with the following dependencies?"
-        apt-cache depends "./$package_file"
-        select yn in "Yes" "No"; do
+        dependencies=$(apt-cache depends "./$package_file")
+        dep_count=$(echo "$dependencies" | wc -l)
+        echo "Showing dependencies for $package_name:"
+        if [[ ! "$dependencies" == E:* ]]
+        then
+            if [[ "$dep_count" -gt 10 ]]
+            then
+                echo "$dependencies" | head -n 10
+                echo "Show all $dep_count dependencies?"
+                select yn in "Yes" "No"; do
+                    case $yn in
+                        Yes )
+                            echo "$dependencies"
+                            break;;
+                        No ) 
+                            exit;;
+                    esac
+                done
+            else
+                echo "$dependencies"
+            fi
+
+            echo "Do you want to install $package_name with the listed dependencies?"
+            select yn in "Yes" "No"; do
             case $yn in
                 Yes )
                     # Install the package
@@ -124,6 +145,9 @@ then
                     exit;;
             esac
         done
+        else
+            echo "$dependencies"
+        fi
     elif [[ "$package_url" == *.rpm ]]
     then
         # Download and install .rpm file
@@ -145,10 +169,31 @@ then
                     deb_package_file=$(alien --to-deb "$package_file" | cut -d " " -f 1)
 
                     # Check package dependencies
-                    echo "Do you want to install $package_name with the following dependencies?"
-                    apt-cache depends "./$package_file"
-                    select yn2 in "Yes" "No"; do
-                        case $yn2 in
+                    dependencies=$(apt-cache depends "./$deb_package_file")
+                    dep_count=$(echo "$dependencies" | wc -l)
+                    echo "Showing dependencies for $package_name:"
+                    if [[ ! "$dependencies" == E:* ]]
+                    then
+                        if [[ "$dep_count" -gt 10 ]]
+                        then
+                            echo "$dependencies" | head -n 10
+                            echo "Show all $dep_count dependencies?"
+                            select yn in "Yes" "No"; do
+                                case $yn in
+                                    Yes )
+                                        echo "$dependencies"
+                                        break;;
+                                    No ) 
+                                        exit;;
+                                esac
+                            done
+                        else
+                            echo "$dependencies"
+                        fi
+
+                        echo "Do you want to install $package_name with the listed dependencies?"
+                        select yn in "Yes" "No"; do
+                        case $yn in
                             Yes )
                                 # Install the package
                                 if ! dpkg -i "./$deb_package_file"
@@ -162,6 +207,9 @@ then
                                 exit;;
                         esac
                     done
+                    else
+                        echo "$dependencies"
+                    fi
                     break;;
                 No ) 
                     # Check package dependencies
