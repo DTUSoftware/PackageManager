@@ -136,7 +136,14 @@ then
                         if ! dpkg -i "./$package_file"
                         then
                             # Install dependencies and package from apt-cache
-                            apt -f install
+                            if apt -f install
+                            then
+                                echo "Installated successfully."
+                            else
+                                echo "Failed installation!"
+                            fi
+                        else
+                            echo "Installed successfully."
                         fi
                         break;;
                     No ) 
@@ -198,7 +205,14 @@ then
                                     if ! dpkg -i "./$deb_package_file"
                                     then
                                         # Install dependencies and package from apt-cache
-                                        apt -f install
+                                        if apt -f install
+                                        then
+                                            echo "Installated successfully."
+                                        else
+                                            echo "Failed installation!"
+                                        fi
+                                    else
+                                        echo "Installed successfully."
                                     fi
                                     break;;
                                 No ) 
@@ -221,7 +235,14 @@ then
                                 if ! rpm -i "$package_file"
                                 then
                                     # Install package with yum
-                                    yum --nogpgcheck localinstall "$package_file"
+                                    if yum --nogpgcheck localinstall "$package_file"
+                                    then
+                                        echo "Installated successfully."
+                                    else
+                                        echo "Failed installation!"
+                                    fi
+                                else
+                                    echo "Installed successfully."
                                 fi
                                 break;;
                             No ) 
