@@ -38,7 +38,6 @@ then
 
     # Go to /usr/local/src
     INSTALL_PATH=/usr/local/src
-    INSTALL_PATH=/tmp
     cd $INSTALL_PATH || exit
 
     # Give package name
