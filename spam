@@ -10,8 +10,10 @@ then
     if test ! -f "/usr/bin/spam"; then
         ln -sr ./spam /usr/bin/spam
         chmod +x /usr/bin/spam
-        # Add alias to run as sudo
-        alias spam="sudo /usr/bin/spam"
+    fi
+    # Add alias to run as sudo
+    if test ! -f "/etc/profile.d/00-spam-alias.sh"; then
+        echo 'alias spam="sudo /usr/bin/spam"' >> /etc/profile.d/spam.sh
     fi
     # Mod perm for user local
     if [ "$(stat -c '%a' /usr/local/src)" != "1777" ]
