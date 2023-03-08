@@ -108,12 +108,12 @@ then
 
         # Check package dependencies
         echo "Do you want to install $package_name with the following dependencies?"
-        apt-cache depends "$package_file"
+        apt-cache depends "./$package_file"
         select yn in "Yes" "No"; do
             case $yn in
                 Yes )
                     # Install the package
-                    if ! dpkg -i "$package_file"
+                    if ! dpkg -i "./$package_file"
                     then
                         # Install dependencies and package from apt-cache
                         apt -f install
@@ -146,12 +146,12 @@ then
 
                     # Check package dependencies
                     echo "Do you want to install $package_name with the following dependencies?"
-                    apt-cache depends "$package_file"
+                    apt-cache depends "./$package_file"
                     select yn2 in "Yes" "No"; do
                         case $yn2 in
                             Yes )
                                 # Install the package
-                                if ! dpkg -i "$deb_package_file"
+                                if ! dpkg -i "./$deb_package_file"
                                 then
                                     # Install dependencies and package from apt-cache
                                     apt -f install
