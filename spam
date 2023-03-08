@@ -105,16 +105,26 @@ then
         # apt-cache rdepends package.deb
         # apt-cache showpkg package-name
         # apt-cache depends package-name
+        # dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
 
         # Check package dependencies
-        #dpkg -I $package_file | grep -E "Depends|Recommends|Suggests|Pre\-Depends"
-
-        # Install the package
-        if ! dpkg -i $package_file
-        then
-            # Install dependencies and package from apt-cache
-            apt -f install
-        fi
+        echo "Do you want to install $package_name with the following dependencies?"
+        apt-cache depends $package_file
+        select yn in "Yes" "No"; do
+            case $yn in
+                Yes )
+                    # Install the package
+                    if ! dpkg -i $package_file
+                    then
+                        # Install dependencies and package from apt-cache
+                        apt -f install
+                    fi
+                    break;;
+                No ) 
+                    echo "Installation cancelled."
+                    exit;;
+            esac
+        done
     elif [[ "$package_url" == *.rpm ]]
     then
         # Download and install .rpm file
@@ -134,19 +144,45 @@ then
                 Yes )
                     # convert the rpm-file to a deb-file
                     deb_package_file=$(alien --to-deb $package_file | cut -d " " -f 1)
-                    # install the deb-file
-                    if ! dpkg -i $deb_package_file
-                    then
-                        # Install dependencies and package from apt-cache
-                        apt -f install
-                    fi
+
+                    # Check package dependencies
+                    echo "Do you want to install $package_name with the following dependencies?"
+                    apt-cache depends $package_file
+                    select yn2 in "Yes" "No"; do
+                        case $yn2 in
+                            Yes )
+                                # Install the package
+                                if ! dpkg -i $deb_package_file
+                                then
+                                    # Install dependencies and package from apt-cache
+                                    apt -f install
+                                fi
+                                break;;
+                            No ) 
+                                echo "Installation cancelled."
+                                exit;;
+                        esac
+                    done
                     break;;
                 No ) 
-                    if ! rpm -i $package_file
-                    then
-                        # Install package with yum
-                        yum --nogpgcheck localinstall $package_file
-                    fi
+                    # Check package dependencies
+                    echo "Do you want to install $package_name with the following dependencies?"
+                    rpm -qpR $package_file
+                    select yn2 in "Yes" "No"; do
+                        case $yn2 in
+                            Yes )
+                                # Install the package
+                                if ! rpm -i $package_file
+                                then
+                                    # Install package with yum
+                                    yum --nogpgcheck localinstall $package_file
+                                fi
+                                break;;
+                            No ) 
+                                echo "Installation cancelled."
+                                exit;;
+                        esac
+                    done
                     exit;;
             esac
         done
